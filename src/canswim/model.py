@@ -716,11 +716,11 @@ class CanswimModel:
             f"Training loop stock subset has {len(self.stock_tickers)} tickers: ",
             self.stock_tickers,
         )
-        # self.targets.load_data(
-        #     stock_tickers=self.stock_tickers,
-        #     min_samples=self.min_samples,
-        #     start_date=start_date,
-        # )
+        self.targets.load_data(
+            stock_tickers=self.stock_tickers,
+            min_samples=self.min_samples,
+            start_date=start_date,
+        )
 
         self.covariates.load_data(
             stock_tickers=self.stock_tickers, start_date=start_date

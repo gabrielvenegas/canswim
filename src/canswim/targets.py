@@ -18,7 +18,7 @@ class Targets:
         self.__start_date = start_date
         self.__load_tickers = stock_tickers
         self.min_samples = min_samples
-        self.load_stock_prices()
+        # self.load_stock_prices()
 
     @property
     def pyarrow_filters(self):
