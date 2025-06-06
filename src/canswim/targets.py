@@ -18,7 +18,7 @@ class Targets:
         self.__start_date = start_date
         self.__load_tickers = stock_tickers
         self.min_samples = min_samples
-        # self.load_stock_prices()
+        self.load_stock_prices()
 
     @property
     def pyarrow_filters(self):
@@ -49,7 +49,7 @@ class Targets:
         tickers = list(stocks_df.index.levels[0])
         logger.info(f"price history loaded for {len(tickers)} stocks: \n{tickers}")
         for t in tickers:
-            # logger.info(f"validating price data for {t}")
+            logger.info(f"validating price data for {t}")
             stock_full_hist = stocks_df.loc[[t]]
             if len(stock_full_hist.index) >= self.min_samples:
                 stock_full_hist = stock_full_hist.droplevel("Symbol")
@@ -58,7 +58,7 @@ class Targets:
                 # after stock dividend or split dates, which makes training data less stable
                 # Ref: https://help.yahoo.com/kb/adjusted-close-sln28256.html
                 stock_price_dict[t] = stock_full_hist.drop(columns=["Adj Close"])
-                # logger.info(f'ticker: {t}')
+                logger.info(f'ticker: {t}')
                 # logger.info(f'ticker historic data: {ticker_dict[t]}')
             else:
                 logger.info(

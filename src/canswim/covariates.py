@@ -213,7 +213,7 @@ class Covariates:
                 t_inst_ownership_series[t] = ts_padded
             except KeyError as e:
                 logger.info(
-                    f"""Skipping {t} from covariates series. 
+                    f"""Skipping {t} from covariates series.
                         No institutional ownership data available for {t}, error: {type(e)}, {e}"""
                 )
             except AssertionError as e:
@@ -399,7 +399,7 @@ class Covariates:
     def load_data(self, stock_tickers: set = None, start_date: pd.Timestamp = None):
         self.__start_date = start_date
         self.__load_tickers = stock_tickers
-        # self.load_past_covariates()
+        self.load_past_covariates()
         self.load_future_covariates()
         self.data_loaded = True
 
@@ -627,7 +627,7 @@ class Covariates:
 
             except KeyError as e:
                 logger.info(
-                    f"""Skipping {t} from covariates series. 
+                    f"""Skipping {t} from covariates series.
                         No analyst estimates available for {t}, error: {type(e)}, {e}"""
                 )
         return t_est_series
@@ -838,7 +838,7 @@ class Covariates:
                 assert not t_div.empty
                 assert (
                     t_div.index.max() <= prices.end_time()
-                ), f"""Dividend declarations which are not know at prediction time must not leak into future covariates: 
+                ), f"""Dividend declarations which are not know at prediction time must not leak into future covariates:
                     {t} dividends end time {t_div.index.max()} > price target end time {prices.end_time()}"""
                 # logger.debug(f"t_div sample for {t}: \n{t_div}")
                 tmp = TimeSeries.from_dataframe(
