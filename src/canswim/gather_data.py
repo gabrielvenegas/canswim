@@ -310,15 +310,15 @@ class MarketDataGatherer:
         logger.info(f"Stock price data index: {new_df.index.names}")
         logger.info("New data gathered. Sample: \n{df}", df=new_df)
         logger.info(f"Columns: \n{new_df.columns}")
-        if old_df is not None:
-            assert sorted(old_df.columns) == sorted(new_df.columns)
-            merged_df = pd.concat([old_df, new_df], axis=0, join="inner")
-            # logger.info(f"merged_df concat\n {merged_df}")
-            assert sorted(merged_df.columns) == sorted(old_df.columns)
-            assert len(merged_df) == len(old_df) + len(new_df)
-            merged_df = merged_df[~merged_df.index.duplicated(keep="last")]
-        else:
-            merged_df = new_df
+        # if old_df is not None:
+        #     assert sorted(old_df.columns) == sorted(new_df.columns)
+        #     merged_df = pd.concat([old_df, new_df], axis=0, join="inner")
+        #     # logger.info(f"merged_df concat\n {merged_df}")
+        #     assert sorted(merged_df.columns) == sorted(old_df.columns)
+        #     assert len(merged_df) == len(old_df) + len(new_df)
+        #     merged_df = merged_df[~merged_df.index.duplicated(keep="last")]
+        # else:
+        merged_df = new_df
         logger.info("Updated data ready. Sample: \n{df}", df=merged_df)
         # df=merged_df.loc[merged_df.index.get_level_values("Symbol") == 'TEAM'])
         assert merged_df.index.is_unique
