@@ -399,7 +399,7 @@ class Covariates:
     def load_data(self, stock_tickers: set = None, start_date: pd.Timestamp = None):
         self.__start_date = start_date
         self.__load_tickers = stock_tickers
-        self.load_past_covariates()
+        # self.load_past_covariates()
         self.load_future_covariates()
         self.data_loaded = True
 
