@@ -122,7 +122,7 @@ class CanswimModel:
             target_set | future_set | past_set
         ) - tickers_with_complete_data
         logger.info(
-            f"""Removing time series for tickers with incomplete data sets: 
+            f"""Removing time series for tickers with incomplete data sets:
                 \n{tickers_without_complete_data}
                 \nKeeping {tickers_with_complete_data}"""
         )
@@ -724,36 +724,34 @@ class CanswimModel:
         self.covariates.load_data(
             stock_tickers=self.stock_tickers, start_date=start_date
         )
-        # --- THIS IS THE FIX ---
-        # Find the common set of tickers that exist in ALL loaded datasets
         logger.info("Aligning tickers across all data sources...")
-        
+
         # Get tickers that actually loaded into the targets object
         # (This assumes targets.target_series is a dict of DataFrames/TimeSeries)
         target_tickers = set(self.targets.target_series.keys())
-        
+
         # Get tickers that actually loaded into the covariates objects
         # (This assumes covariates objects also store data in dicts by ticker)
         past_cov_tickers = set(self.covariates.past_covariates.keys())
         future_cov_tickers = set(self.covariates.future_covariates.keys())
-    
+
         # The final, "blessed" list of tickers is the intersection of all sets
         final_tickers = target_tickers.intersection(past_cov_tickers).intersection(future_cov_tickers)
-        
+
         logger.info(f"{len(target_tickers)} tickers in price data.")
         logger.info(f"{len(past_cov_tickers)} tickers in past covariates.")
         logger.info(f"{len(future_cov_tickers)} tickers in future covariates.")
         logger.info(f"Found {len(final_tickers)} common tickers to proceed with.")
-    
+
         # Overwrite the instance's ticker list with ONLY the common tickers
         self.__stock_tickers = sorted(list(final_tickers))
-        
+
         # Now, filter all data objects to only contain the common tickers
         self.targets.target_series = {t: self.targets.target_series[t] for t in self.__stock_tickers}
         self.covariates.past_covariates = {t: self.covariates.past_covariates[t] for t in self.__stock_tickers}
         self.covariates.future_covariates = {t: self.covariates.future_covariates[t] for t in self.__stock_tickers}
         # --- END FIX ---
-    
+
         logger.info(
             f"Final training loop stock set has {len(self.__stock_tickers)} tickers: ",
             self.__stock_tickers,

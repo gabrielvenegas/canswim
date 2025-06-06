@@ -115,10 +115,10 @@ def main(new_model: bool = False):
         try:
             # load a new data sample from local storage
             trainer.canswim_model.load_data()
-            # prepare timeseries for training
-            trainer.canswim_model.prepare_data()
-            # train model
-            trainer.canswim_model.train()
+            # # prepare timeseries for training
+            # trainer.canswim_model.prepare_data()
+            # # train model
+            # trainer.canswim_model.train()
         except Exception as e:
             logger.exception(f"Skipping train loop due to ERROR.: {e}")
         # Daily routine
