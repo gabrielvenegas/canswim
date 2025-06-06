@@ -104,15 +104,15 @@ class MarketDataGatherer:
         stock_files = [
             # "test_stocks.csv"
             "IBD50.csv",
-            "IBD250.csv",
-            "ibdlive_picks.csv",
-            "russell2000_iwm_holdings.csv",
-            "sp500_ivv_holdings.csv",
-            "nasdaq100_cndx_holdings.csv",
-            "watchlist.csv",
-            "vti_total_market_stocks.csv",
-            "ITB_holdings.csv",
-            "IYM_holdings.csv",
+            # "IBD250.csv",
+            # "ibdlive_picks.csv",
+            # "russell2000_iwm_holdings.csv",
+            # "sp500_ivv_holdings.csv",
+            # "nasdaq100_cndx_holdings.csv",
+            # "watchlist.csv",
+            # "vti_total_market_stocks.csv",
+            # "ITB_holdings.csv",
+            # "IYM_holdings.csv",
             self.all_stocks_file,
         ]
         logger.info(
@@ -206,7 +206,7 @@ class MarketDataGatherer:
             bucket_class=MemoryQueueBucket,
             backend=SQLiteCache("yfinance.cache"),
         )
-        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d", session=session)
+        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d")
         new_df = new_df.dropna(how="all")
         logger.info("New data gathered. Sample: \n{bm}", bm=new_df)
         logger.info(f"Columns: \n{new_df.columns}")
@@ -301,7 +301,7 @@ class MarketDataGatherer:
             backend=SQLiteCache("yfinance.cache"),
         )
         new_df = yf.download(
-            self.stocks_ticker_set, start=start_date, group_by="tickers", session=session
+            self.stocks_ticker_set, start=start_date, group_by="tickers"
         )
         new_df = new_df.dropna(how="all")
         new_df = new_df.stack(level=0)

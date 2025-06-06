@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 args=("$@")
 #conda activate canswim
 #pip install -e ./

@@ -168,11 +168,11 @@ class HFHub:
             token=self.HF_TOKEN,
         )
         # Unpack forecast parquet files from tar
-        forecast_dir = f"{data_dir}/forecast/"
-        forecast_tar = f"{data_dir}/forecast.tar.gz"
-        with tarfile.open(forecast_tar, "r:gz") as tar:
-            logger.info(f"Extracting {forecast_tar} to folder {forecast_dir}")
-            tar.extractall(path=forecast_dir, filter="data")
+        # forecast_dir = f"{data_dir}/forecast/"
+        # forecast_tar = f"{data_dir}/forecast.tar.gz"
+        # with tarfile.open(forecast_tar, "r:gz") as tar:
+        #     logger.info(f"Extracting {forecast_tar} to folder {forecast_dir}")
+        #     tar.extractall(path=forecast_dir, filter="data")
 
     def upload_data(
         self, repo_id: str = None, private: bool = True, local_dir: str = None
