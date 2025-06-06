@@ -168,7 +168,11 @@ def main(new_model: bool = False):
         # since PyTorch Lightning currently does not recommend
         # using fit() multiple times without loading model weights
         # WARNING:darts.models.forecasting.torch_forecasting_model:Attempting to retrain/fine-tune the model without resuming from a checkpoint. This is currently discouraged. Consider model `TiDEModel.load_weights()` to load the weights for fine-tuning.
-        trainer.canswim_model.load_model()
+        if not (new_model and i == 0):
+            logger.info("Reloading model weights to continue training...")
+            trainer.canswim_model.load_model()
+        else:
+            logger.info("First training loop for a new model. Skipping model reload.")
 
 
 if __name__ == "__main__":
