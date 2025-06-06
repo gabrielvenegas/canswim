@@ -721,9 +721,10 @@ class CanswimModel:
             min_samples=self.min_samples,
             start_date=start_date,
         )
-        self.covariates.load_data(
-            stock_tickers=self.stock_tickers, start_date=start_date
-        )
+        # self.covariates.load_data(
+        #     stock_tickers=self.stock_tickers, start_date=start_date
+        # )
+
         logger.info("Aligning tickers across all data sources...")
 
         # Get tickers that actually loaded into the targets object
