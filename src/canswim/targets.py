@@ -46,7 +46,7 @@ class Targets:
         # stocks_df.index = pd.to_datetime(stocks_df.index)
         stock_price_dict = {}
         # stock_tickers = self.__get_stock_tickers(stocks_df)
-        tickers = list(stocks_df.index.levels[0])
+        tickers = list(stocks_df.index.get_level_values('Symbol').unique())
         logger.info(f"price history loaded for {len(tickers)} stocks: \n{tickers}")
         for t in tickers:
             logger.info(f"validating price data for {t}")
