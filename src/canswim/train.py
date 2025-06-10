@@ -1,3 +1,4 @@
+import torch
 from canswim.model import CanswimModel
 from darts.models import TiDEModel
 from canswim.hfhub import HFHub
@@ -36,6 +37,27 @@ class CanswimTrainer:
             optimizer_kwargs={"lr": 1e-05},
             save_checkpoints=False,  # checkpoint to retrieve the best performing model state,
             force_reset=False,
+            # input_chunk_length=50,      # Reduced from 252
+            # output_chunk_length=10,     # Reduced from 42
+            # hidden_size=128,            # Reduced from 2048
+            # num_encoder_layers=1,       # Reduced from 3
+            # num_decoder_layers=1,       # Reduced from 2
+            # decoder_output_dim=4,       # Reduced from 8
+            # temporal_decoder_hidden=20, # Reduced from 80
+            # use_layer_norm=True,
+            # use_reversible_instance_norm=True,
+            # dropout=0.3,
+            # optimizer_kwargs={"lr": 1e-05},
+            # save_checkpoints=False,
+            # force_reset=False,
+            # # Add these for lightweight testing:
+            # n_epochs=2,                 # Very few epochs for testing
+            # batch_size=8,              # Small batch size
+            # pl_trainer_kwargs={
+            #     "accelerator": "mps" if torch.backends.mps.is_available() else "cpu",
+            #     "devices": 1,
+            #     "max_epochs": 2
+            # }
         )
 
     def plot_backtest_results(self):
@@ -97,7 +119,7 @@ def main(new_model: bool = False):
     else:
         trainer.canswim_model.download_model(
             repo_id=repo_id
-        )  # prepare next sample subset
+        )
 
     # download market data from hf hub if it hasn't been downloaded already
     trainer.canswim_model.download_data(repo_id=repo_id)
