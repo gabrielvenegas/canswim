@@ -15,7 +15,7 @@ def main():
     # NOTE: be careful not to override local data from previous searches!
     hfhub.download_data()
     load_dotenv(override=True)
-    repo_id = os.getenv("repo_id", "ivelin/canswim")
+    repo_id = os.getenv("repo_id", "gabrielvenegas/canswim")
     n_optuna_trials = int(os.getenv("n_optuna_trials", 100))
 
     def build_dummy_model():

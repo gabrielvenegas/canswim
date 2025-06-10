@@ -66,7 +66,7 @@ setup(
     #
     # This field corresponds to the "Home-Page" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#home-page-optional
-    # url="https://github.com/ivelin/canswim",  # Optional
+    # url="https://github.com/gabrielvenegas/canswim",  # Optional
     # This should be your name or the name of the organization which owns the
     # project.
     # author="A. Random Developer",  # Optional

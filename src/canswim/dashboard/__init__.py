@@ -17,7 +17,7 @@ import os
 # pd.options.plotting.backend = "matplotlib"
 # pd.options.plotting.backend = "hvplot"
 
-repo_id = "ivelin/canswim"
+repo_id = "gabrielvenegas/canswim"
 
 
 class CanswimPlayground:
@@ -66,13 +66,13 @@ class CanswimPlayground:
                 logger.info("Creating search optimized database")
                 db_con.sql(
                     f"""--sql
-                    SET enable_progress_bar = true;        
+                    SET enable_progress_bar = true;
                     """
                 )
                 logger.info("Creating stock_tickers table")
                 db_con.sql(
                     f"""--sql
-                    CREATE OR REPLACE TABLE stock_tickers 
+                    CREATE OR REPLACE TABLE stock_tickers
                     AS SELECT * FROM read_csv('{self.stock_tickers_path}', header=True)
                     """
                 )
@@ -90,8 +90,8 @@ class CanswimPlayground:
                 )
                 db_con.sql(
                     f"""--sql
-                    CREATE OR REPLACE TABLE forecast 
-                    AS SELECT date, symbol, make_date(forecast_start_year, forecast_start_month, forecast_start_day) as start_date, COLUMNS(\"close_quantile_\d+\.\d+\") 
+                    CREATE OR REPLACE TABLE forecast
+                    AS SELECT date, symbol, make_date(forecast_start_year, forecast_start_month, forecast_start_day) as start_date, COLUMNS(\"close_quantile_\d+\.\d+\")
                     FROM read_parquet('{self.forecast_path}/**/*.parquet', hive_partitioning = 1) as f
                     SEMI JOIN stock_tickers
                     ON f.symbol = stock_tickers.symbol
@@ -111,7 +111,7 @@ class CanswimPlayground:
                         SELECT symbol, max(start_date) as date
                         FROM forecast as f
                         SEMI JOIN stock_tickers
-                        ON f.symbol = stock_tickers.symbol                
+                        ON f.symbol = stock_tickers.symbol
                         GROUP BY symbol
                     """
                 )
@@ -142,7 +142,7 @@ class CanswimPlayground:
                 logger.info("Creating backtest_error table")
                 db_con.sql(
                     f"""--sql
-                    CREATE OR REPLACE TABLE backtest_error 
+                    CREATE OR REPLACE TABLE backtest_error
                     AS SELECT f.symbol, mean(abs(log(greatest(f."close_quantile_0.5", 0.01)/cp.Close))) as mal_error
                     FROM forecast as f, close_price as cp
                     WHERE cp.symbol = f.symbol AND cp.date = f.date
@@ -167,7 +167,7 @@ class CanswimPlayground:
                 """
             CANSWIM Playground for CANSLIM style investors.
             * __NOT FINANCIAL OR INVESTMENT ADVICE. USE AT YOUR OWN RISK!__
-            * Model trainer source repo [here](https://github.com/ivelin/canswim). Feedback welcome via github issues.
+            * Model trainer source repo [here](https://github.com/gabrielvenegas/canswim). Feedback welcome via github issues.
             """
             )
             with gr.Tab("Charts"):

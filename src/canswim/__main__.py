@@ -107,7 +107,7 @@ logger.info("command line args: {args}", args=args)
 
 hfhub = HFHub()
 load_dotenv(override=True)
-repo_id = os.getenv("repo_id", "ivelin/canswim")
+repo_id = os.getenv("repo_id", "gabrielvenegas/canswim")
 
 
 def signal_handler(sig, frame):
