@@ -29,42 +29,85 @@ class Targets:
 
     def load_stock_prices(self):
         stocks_price_file = "data/data-3rd-party/all_stocks_price_hist_1d.parquet"
-        logger.info(
-            f"Loading data from: {stocks_price_file} with filter: {self.pyarrow_filters}"
-        )
-        # load into a dataframe with valid market calendar days
-        # stocks_df = pd.read_csv(
-        #     stocks_price_file, header=[0, 1], index_col=0, on_bad_lines="warn"
-        # )
-        stocks_df = pd.read_parquet(
-            stocks_price_file,
-            filters=self.pyarrow_filters,
-            dtype_backend="numpy_nullable",
-        )
-        logger.info("filtered data loaded")
-        stocks_df = stocks_df.dropna()
-        # stocks_df.index = pd.to_datetime(stocks_df.index)
-        stock_price_dict = {}
-        # stock_tickers = self.__get_stock_tickers(stocks_df)
-        tickers = list(stocks_df.index.get_level_values('Symbol').unique())
-        logger.info(f"price history loaded for {len(tickers)} stocks: \n{tickers}")
-        for t in tickers:
-            logger.info(f"validating price data for {t}")
-            stock_full_hist = stocks_df.loc[[t]]
-            if len(stock_full_hist.index) >= self.min_samples:
-                stock_full_hist = stock_full_hist.droplevel("Symbol")
-                stock_full_hist.index = pd.to_datetime(stock_full_hist.index)
-                # Drop Adj Close because yfiance changes its values retroactively at future dates
-                # after stock dividend or split dates, which makes training data less stable
-                # Ref: https://help.yahoo.com/kb/adjusted-close-sln28256.html
-                stock_price_dict[t] = stock_full_hist.drop(columns=["Adj Close"])
-                logger.info(f'ticker: {t}')
-                # logger.info(f'ticker historic data: {ticker_dict[t]}')
+        logger.info(f"Loading data from: {stocks_price_file}")
+
+        try:
+            # Load the full parquet file (PyArrow filters don't work with MultiIndex)
+            stocks_df = pd.read_parquet(
+                stocks_price_file,
+                dtype_backend="numpy_nullable",
+            )
+            logger.info("Raw data loaded")
+
+            # Filter by symbols
+            available_symbols = stocks_df.index.get_level_values('Symbol').unique()
+            valid_tickers = [t for t in self.__load_tickers if t in available_symbols]
+
+            if valid_tickers:
+                stocks_df = stocks_df.loc[valid_tickers]
+                logger.info(f"Filtered to {len(valid_tickers)} symbols: {valid_tickers}")
             else:
-                logger.info(
-                    f"Skipping {t} from price series. Not enough samples for model training."
-                )
-        self.stock_price_dict = stock_price_dict
+               logger.warning(f"No matching symbols found. Available: {list(available_symbols[:10])}...")
+               self.stock_price_dict = {}
+               return
+
+            # Filter by date
+            if self.__start_date is not None:
+                stocks_df = stocks_df.loc[
+                    stocks_df.index.get_level_values('Date') >= self.__start_date
+                ]
+                logger.info(f"Filtered by start date: {self.__start_date}")
+
+            logger.info("Filtered data loaded")
+            stocks_df = stocks_df.dropna()
+
+            # Safely flatten the column MultiIndex if it exists
+            if isinstance(stocks_df.columns, pd.MultiIndex) and stocks_df.columns.nlevels > 1:
+                logger.info(f"Flattening MultiIndex columns with {stocks_df.columns.nlevels} levels")
+                stocks_df.columns = stocks_df.columns.droplevel(0)  # Remove 'Price' level
+            else:
+                logger.info("Columns already flattened or not MultiIndex")
+
+            logger.info(f"Final columns: {stocks_df.columns.tolist()}")
+
+            # Process individual stocks
+            stock_price_dict = {}
+            tickers = list(stocks_df.index.get_level_values('Symbol').unique())
+            logger.info(f"Price history loaded for {len(tickers)} stocks: {tickers}")
+
+            for t in tickers:
+                logger.info(f"Validating price data for {t}")
+                try:
+                    stock_full_hist = stocks_df.loc[t]
+
+                    if len(stock_full_hist.index) >= self.min_samples:
+                        # Ensure index is datetime
+                        stock_full_hist.index = pd.to_datetime(stock_full_hist.index)
+
+                        # Drop Adj Close if it exists
+                        # Ref: https://help.yahoo.com/kb/adjusted-close-sln28256.html
+                        if "Adj Close" in stock_full_hist.columns:
+                            stock_full_hist = stock_full_hist.drop(columns=["Adj Close"])
+                            logger.info(f"Dropped Adj Close column for {t}")
+
+                        stock_price_dict[t] = stock_full_hist
+                        logger.info(f"Added ticker: {t} with {len(stock_full_hist)} samples")
+                    else:
+                        logger.info(
+                            f"Skipping {t} from price series. Not enough samples "
+                            f"({len(stock_full_hist.index)} < {self.min_samples})"
+                        )
+                except Exception as e:
+                    logger.error(f"Error processing ticker {t}: {e}")
+                    continue
+
+            self.stock_price_dict = stock_price_dict
+            logger.info(f"Successfully loaded {len(stock_price_dict)} stocks")
+
+        except Exception as e:
+            logger.error(f"Error loading stock prices: {e}")
+            self.stock_price_dict = {}
+            raise
 
     def prepare_data(
         self, stock_price_series: dict = None, target_columns: Union[str, list] = None

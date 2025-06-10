@@ -473,8 +473,8 @@ class CanswimModel:
 
     def build(self, **kwargs):
         try:
-            hparams = yaml.load("hparams.yaml")
-            for k, v in hparams:
+            hparams = yaml.load(open("hparams.yaml", "r"), Loader=yaml.FullLoader)
+            for k, v in hparams.items():
                 kwargs.setdefault(k, v)
             logger.info("hparams.yaml loaded")
         except Exception as e:
