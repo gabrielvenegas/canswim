@@ -104,7 +104,7 @@ class MarketDataGatherer:
         stock_files = [
             # "test_stocks.csv"
             "IBD50.csv",
-            # "IBD250.csv",
+            "IBD250.csv",
             # "ibdlive_picks.csv",
             # "russell2000_iwm_holdings.csv",
             # "sp500_ivv_holdings.csv",
