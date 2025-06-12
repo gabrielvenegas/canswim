@@ -96,7 +96,7 @@ class MarketDataGatherer:
         self.data_3rd_party = os.getenv("data-3rd-party", "data-3rd-party")
         self.all_stocks_file = "all_stocks.csv"
         self.price_frequency = "1d"  # "1wk"
-        self.min_start_date = os.getenv("train_date_start", "2023-01-01")
+        self.min_start_date = os.getenv("train_date_start", "2020-01-01")
 
     def gather_stock_tickers(self):
         # Prepare list of stocks for training

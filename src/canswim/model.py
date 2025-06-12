@@ -353,7 +353,7 @@ class CanswimModel:
 
         # pick the earlies date after which market data is available for all covariate series
         self.train_date_start = pd.Timestamp(
-            os.getenv("train_date_start", "1991-01-01")
+            os.getenv("train_date_start", "2020-01-01")
         )
 
     def prepare_stock_price_data(self, start_date: pd.Timestamp = None):

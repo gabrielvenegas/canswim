@@ -37,6 +37,7 @@ class Targets:
                 stocks_price_file,
                 dtype_backend="numpy_nullable",
             )
+
             logger.info("Raw data loaded")
 
             # Filter by symbols
