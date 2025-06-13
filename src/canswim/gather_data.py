@@ -103,7 +103,7 @@ class MarketDataGatherer:
         all_stock_set = set()
         stock_files = [
             # "test_stocks.csv"
-            "IBD50.csv",
+            # "IBD50.csv",
             "IBD250.csv",
             # "ibdlive_picks.csv",
             # "russell2000_iwm_holdings.csv",

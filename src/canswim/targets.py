@@ -44,6 +44,8 @@ class Targets:
             available_symbols = stocks_df.index.get_level_values('Symbol').unique()
             valid_tickers = [t for t in self.__load_tickers if t in available_symbols]
 
+            logger.info(f"Available tickers in stocks DataFrame: {len(valid_tickers)}")
+
             if valid_tickers:
                 stocks_df = stocks_df.loc[valid_tickers]
                 logger.info(f"Filtered to {len(valid_tickers)} symbols: {valid_tickers}")
@@ -57,10 +59,14 @@ class Targets:
                 stocks_df = stocks_df.loc[
                     stocks_df.index.get_level_values('Date') >= self.__start_date
                 ]
+
                 logger.info(f"Filtered by start date: {self.__start_date}")
 
             logger.info("Filtered data loaded")
-            stocks_df = stocks_df.dropna()
+
+            # Filter by essential columns
+            essential_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
+            stocks_df = stocks_df.dropna(subset=essential_cols)
 
             # Safely flatten the column MultiIndex if it exists
             if isinstance(stocks_df.columns, pd.MultiIndex) and stocks_df.columns.nlevels > 1:
