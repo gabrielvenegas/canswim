@@ -24,7 +24,7 @@ class CanswimTrainer:
     def build_new_model(self):
         """Build a new model using known optimal hyperparameters"""
         self.canswim_model.build(
-            input_chunk_length=252,
+            input_chunk_length=168,
             output_chunk_length=42,
             hidden_size=2048,
             num_encoder_layers=3,
@@ -50,14 +50,6 @@ class CanswimTrainer:
             # optimizer_kwargs={"lr": 1e-05},
             # save_checkpoints=False,
             # force_reset=False,
-            # # Add these for lightweight testing:
-            # n_epochs=2,                 # Very few epochs for testing
-            # batch_size=8,              # Small batch size
-            # pl_trainer_kwargs={
-            #     "accelerator": "mps" if torch.backends.mps.is_available() else "cpu",
-            #     "devices": 1,
-            #     "max_epochs": 2
-            # }
         )
 
     def plot_backtest_results(self):
