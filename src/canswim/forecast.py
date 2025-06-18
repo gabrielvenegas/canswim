@@ -107,6 +107,11 @@ class CanswimForecaster:
                         f"Skipping {tickers_list[i]} for forecast start date {forecast_start_date} due to error: {type(e)}: {e}"
                     )
         if len(target_sliced_list) > 0:
+            for i, (tgt, p_cov, f_cov, ticker) in enumerate(zip(target_sliced_list, past_cov_list, future_cov_list, forecasted_tickers)):
+                logger.info(
+                    f"[{ticker}] target len: {len(tgt)}, past_cov len: {len(p_cov)}, future_cov len: {len(f_cov)}"
+                )
+
             canswim_forecast = self.canswim_model.predict(
                 target=target_sliced_list,
                 past_covariates=past_cov_list,
