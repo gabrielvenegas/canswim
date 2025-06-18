@@ -26,6 +26,13 @@ class CanswimForecaster:
         logger.info(f"n_stocks: {self.n_stocks}")
         self.forecast_subdir = os.getenv("forecast_subdir", "forecast/")
         logger.info(f"Forecast data path: {self.forecast_subdir}")
+
+        # --- ADD THESE LINES ---
+        self.forecast_path = os.path.join(self.data_dir, self.forecast_subdir)
+        os.makedirs(self.forecast_path, exist_ok=True) # Ensure the directory exists
+        logger.info(f"Ensured forecast output directory exists: {self.forecast_path}")
+        # --- END ADDITION ---
+
         self.canswim_model = CanswimModel(forecast_only=True)
         self.hfhub = HFHub()
 
@@ -136,7 +143,7 @@ class CanswimForecaster:
             SEMI JOIN stock_group
             ON f.symbol = stock_group.symbol
             GROUP BY f.symbol, forecast_start_year, forecast_start_month, forecast_start_day
-            HAVING 
+            HAVING
                 forecast_start_year={y} AND
                 forecast_start_month={m} AND
                 forecast_start_day={d} AND
@@ -238,15 +245,15 @@ def get_next_open_market_day(after_date=None):
     """Get the date of the next open market day after a given date: after_date when provided or after today otherwise."""
     # Get calendar for NYSE
     nyse = mcal.get_calendar('NYSE')
-    
+
     if after_date is None:
         # Get today's date
         today = datetime.now().date()
         after_date = today
-    
+
     # Look for the next valid trading day within a reasonably big window of 20 regular business days
     valid_days = nyse.valid_days(start_date=after_date+BDay(1), end_date=after_date + BDay(20), tz=None)
-    
+
     next_trading_day = None
 
     if valid_days is not None and len(valid_days) > 0:
