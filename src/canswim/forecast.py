@@ -126,41 +126,118 @@ class CanswimForecaster:
         else:
             dt = pd.Timestamp.now()
         # align date to closest business day
-        # leave as is if dt is a business day,
-        # otherwise move forward to next business day
         bd = dt + 0 * BDay()
         y = bd.year
         m = bd.month
         d = bd.day
-        # logger.debug(f"Forecast start date, year, month, day: {bd}, {y}, {m}, {d}")
-        # logger.debug(f"len(stocks_df): {len(stocks_df)}")
-        # logger.debug(f"stocks_df: {stocks_df}")
-        df = duckdb.sql(
-            f"""--sql
-            CREATE OR REPLACE TABLE stock_group AS SELECT Symbol from stocks_df;
-            SELECT symbol, count(*), forecast_start_year, forecast_start_month, forecast_start_day
-            FROM read_parquet('{self.data_dir}/{self.forecast_subdir}**/*.parquet', hive_partitioning = 1) as f
-            SEMI JOIN stock_group
-            ON f.symbol = stock_group.symbol
-            GROUP BY f.symbol, forecast_start_year, forecast_start_month, forecast_start_day
-            HAVING
-                forecast_start_year={y} AND
-                forecast_start_month={m} AND
-                forecast_start_day={d} AND
-                count(*) >= {self.canswim_model.pred_horizon}
-            """
-        ).df()
-        # logger.debug(f"sql result: {df}")
-        stocks_with_saved_forecast = set(df["symbol"])
-        logger.debug(
-            f"""These stocks already have a saved forecast: {stocks_with_saved_forecast}"""
-        )
+
+        # Initialize stocks_with_saved_forecast to an empty set by default.
+        # This guarantees it always exists and is correct if no forecasts are found.
+        stocks_with_saved_forecast = set()
+
+        # Ensure stocks_df is valid before proceeding
+        if stocks_df is None or 'Symbol' not in stocks_df.columns:
+            logger.error("stocks_df is invalid or missing 'Symbol' column. Cannot determine stocks without forecast.")
+            # Return an empty list for stocks_without_forecast to prevent further errors
+            return []
+
+        try:
+            # Try to read the forecast files.
+            # If the directory doesn't exist or has no matching files, duckdb.sql might raise IOException.
+            # If the query runs but returns no rows, df_result will be an empty DataFrame.
+            df_result = duckdb.sql(
+                f"""--sql
+                CREATE OR REPLACE TABLE stock_group AS SELECT Symbol from stocks_df;
+                SELECT symbol, count(*), forecast_start_year, forecast_start_month, forecast_start_day
+                FROM read_parquet('{self.data_dir}/{self.forecast_subdir}**/*.parquet', hive_partitioning = 1) as f
+                SEMI JOIN stock_group
+                ON f.symbol = stock_group.symbol
+                GROUP BY f.symbol, forecast_start_year, forecast_start_month, forecast_start_day
+                HAVING
+                    forecast_start_year={y} AND
+                    forecast_start_month={m} AND
+                    forecast_start_day={d} AND
+                    count(*) >= {self.canswim_model.pred_horizon}
+                """
+            ).df()
+
+            # Check if the result is not empty and has the 'symbol' column
+            if not df_result.empty and 'symbol' in df_result.columns:
+                stocks_with_saved_forecast = set(df_result["symbol"])
+            else:
+                # This covers cases where the query ran successfully but matched zero rows,
+                # or if the 'symbol' column wasn't found (less likely but safer).
+                logger.debug("No matching forecasts found in existing parquet files or result is empty.")
+                # stocks_with_saved_forecast remains the initialized empty set.
+
+        except duckdb.IOException as e:
+            # This specifically catches the "No files found" error from read_parquet.
+            logger.warning(
+                f"Could not read existing forecasts (this is expected on the first run or if directory is empty): {e}"
+            )
+            # stocks_with_saved_forecast remains the initialized empty set.
+        except Exception as e:
+            # Catch any other potential errors during DuckDB SQL execution or DataFrame processing.
+            logger.error(f"An unexpected error occurred while querying existing forecasts: {e}")
+            # In case of any other error, we still want to ensure stocks_with_saved_forecast is an empty set.
+            # It's already initialized as such, so no further action needed here for that specific variable.
+
+        # Now, proceed with the original logic using the guaranteed-to-exist stocks_with_saved_forecast
         stocks_without_forecast = set(stocks_df["Symbol"]) - stocks_with_saved_forecast
         stocks_without_forecast = sorted(list(stocks_without_forecast))
         logger.debug(
             f"""These stocks do not have a saved forecast yet: {stocks_without_forecast}"""
         )
         return stocks_without_forecast
+
+    # def _get_stocks_without_forecast(self, stocks_df=None, forecast_start_date=None):
+    #     if forecast_start_date is not None:
+    #         dt = pd.Timestamp(forecast_start_date)
+    #     else:
+    #         dt = pd.Timestamp.now()
+    #     # align date to closest business day
+    #     # leave as is if dt is a business day,
+    #     # otherwise move forward to next business day
+    #     bd = dt + 0 * BDay()
+    #     y = bd.year
+    #     m = bd.month
+    #     d = bd.day
+    #     # logger.debug(f"Forecast start date, year, month, day: {bd}, {y}, {m}, {d}")
+    #     # logger.debug(f"len(stocks_df): {len(stocks_df)}")
+    #     # logger.debug(f"stocks_df: {stocks_df}")
+    #     try:
+    #         df = duckdb.sql(
+    #             f"""--sql
+    #             CREATE OR REPLACE TABLE stock_group AS SELECT Symbol from stocks_df;
+    #             SELECT symbol, count(*), forecast_start_year, forecast_start_month, forecast_start_day
+    #             FROM read_parquet('{self.data_dir}/{self.forecast_subdir}**/*.parquet', hive_partitioning = 1) as f
+    #             SEMI JOIN stock_group
+    #             ON f.symbol = stock_group.symbol
+    #             GROUP BY f.symbol, forecast_start_year, forecast_start_month, forecast_start_day
+    #             HAVING
+    #                 forecast_start_year={y} AND
+    #                 forecast_start_month={m} AND
+    #                 forecast_start_day={d} AND
+    #                 count(*) >= {self.canswim_model.pred_horizon}
+    #             """
+    #         ).df()
+    #     except duckdb.IOException as e:
+    #         # If an IOException occurs (likely "No files found"), it means this is the first run.
+    #         # We'll log it and proceed as if no stocks have forecasts.
+    #         logger.warning(
+    #             f"Could not read existing forecasts (this is expected on the first run): {e}"
+    #         )
+    #     # logger.debug(f"sql result: {df}")
+    #     stocks_with_saved_forecast = set(df["symbol"])
+    #     logger.debug(
+    #         f"""These stocks already have a saved forecast: {stocks_with_saved_forecast}"""
+    #     )
+    #     stocks_without_forecast = set(stocks_df["Symbol"]) - stocks_with_saved_forecast
+    #     stocks_without_forecast = sorted(list(stocks_without_forecast))
+    #     logger.debug(
+    #         f"""These stocks do not have a saved forecast yet: {stocks_without_forecast}"""
+    #     )
+    #     return stocks_without_forecast
 
     def prep_next_stock_group(self, forecast_start_date=None):
         """Generator which iterates over all stocks and prepares them in groups."""
