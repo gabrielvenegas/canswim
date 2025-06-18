@@ -68,8 +68,8 @@ class CanswimForecaster:
         target_sliced_list = []
         past_cov_list = []
         future_cov_list = []
-        # tickers_list = self.canswim_model.targets_ticker_list
-        ticker_list = [] #
+        tickers_list = self.canswim_model.targets_ticker_list
+        # ticker_list = [] #
         # trim end of targets to specified forecast start date
         if forecast_start_date is not None:
             logger.debug(
