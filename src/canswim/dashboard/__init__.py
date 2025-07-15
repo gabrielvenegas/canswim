@@ -91,7 +91,7 @@ class CanswimPlayground:
                 db_con.sql(
                     f"""--sql
                     CREATE OR REPLACE TABLE forecast
-                    AS SELECT date, symbol, make_date(forecast_start_year, forecast_start_month, forecast_start_day) as start_date, COLUMNS(\"close_quantile_\d+\.\d+\")
+                    AS SELECT date, symbol, make_date(forecast_start_year, forecast_start_month, forecast_start_day) as start_date, COLUMNS('close_quantile_.*')
                     FROM read_parquet('{self.forecast_path}/**/*.parquet', hive_partitioning = 1) as f
                     SEMI JOIN stock_tickers
                     ON f.symbol = stock_tickers.symbol
