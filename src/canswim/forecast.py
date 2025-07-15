@@ -267,7 +267,7 @@ class CanswimForecaster:
         # group tickers in workable sample sizes for each forecast pass
         # credit ref: https://stackoverflow.com/questions/434287/how-to-iterate-over-a-list-in-chunks
         for pos in range(0, len(stock_list), self.n_stocks):
-            stock_group = ['AAPL'] # stock_list[pos : pos + self.n_stocks]
+            stock_group = stock_list[pos : pos + self.n_stocks]
             self.canswim_model.load_data(
                 stock_tickers=stock_group, start_date=self.start_date
             )
