@@ -24,32 +24,32 @@ class CanswimTrainer:
     def build_new_model(self):
         """Build a new model using known optimal hyperparameters"""
         self.canswim_model.build(
-            input_chunk_length=168,
-            output_chunk_length=42,
-            hidden_size=2048,
-            num_encoder_layers=3,
-            num_decoder_layers=2,
-            decoder_output_dim=8,
-            temporal_decoder_hidden=80,
-            use_layer_norm=True,
-            use_reversible_instance_norm=True,
-            dropout=0.3,
-            optimizer_kwargs={"lr": 1e-05},
-            save_checkpoints=False,  # checkpoint to retrieve the best performing model state,
-            force_reset=False,
-            # input_chunk_length=50,      # Reduced from 252
-            # output_chunk_length=10,     # Reduced from 42
-            # hidden_size=128,            # Reduced from 2048
-            # num_encoder_layers=1,       # Reduced from 3
-            # num_decoder_layers=1,       # Reduced from 2
-            # decoder_output_dim=4,       # Reduced from 8
-            # temporal_decoder_hidden=20, # Reduced from 80
+            # input_chunk_length=168,
+            # output_chunk_length=42,
+            # hidden_size=2048,
+            # num_encoder_layers=3,
+            # num_decoder_layers=2,
+            # decoder_output_dim=8,
+            # temporal_decoder_hidden=80,
             # use_layer_norm=True,
             # use_reversible_instance_norm=True,
             # dropout=0.3,
             # optimizer_kwargs={"lr": 1e-05},
-            # save_checkpoints=False,
+            # save_checkpoints=False,  # checkpoint to retrieve the best performing model state,
             # force_reset=False,
+            input_chunk_length=50,      # Reduced from 252
+            output_chunk_length=10,     # Reduced from 42
+            hidden_size=128,            # Reduced from 2048
+            num_encoder_layers=1,       # Reduced from 3
+            num_decoder_layers=1,       # Reduced from 2
+            decoder_output_dim=4,       # Reduced from 8
+            temporal_decoder_hidden=20, # Reduced from 80
+            use_layer_norm=True,
+            use_reversible_instance_norm=True,
+            dropout=0.3,
+            optimizer_kwargs={"lr": 1e-05},
+            save_checkpoints=False,
+            force_reset=False,
         )
 
     def plot_backtest_results(self):
