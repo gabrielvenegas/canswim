@@ -91,7 +91,7 @@ def main(new_model: bool = False):
 
     n_outer_train_loop = 1
     hfhub = HFHub()
-    default_repo_id = "gabrielvenegas/canswim"
+    default_repo_id = "maxisplus/canswim"
     repo_id = default_repo_id
 
     def get_env():

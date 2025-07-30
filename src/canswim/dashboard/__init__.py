@@ -17,7 +17,7 @@ import os
 # pd.options.plotting.backend = "matplotlib"
 # pd.options.plotting.backend = "hvplot"
 
-repo_id = "gabrielvenegas/canswim"
+repo_id = "maxisplus/canswim"
 
 
 class CanswimPlayground:
@@ -167,7 +167,7 @@ class CanswimPlayground:
                 """
             CANSWIM Playground for CANSLIM style investors.
             * __NOT FINANCIAL OR INVESTMENT ADVICE. USE AT YOUR OWN RISK!__
-            * Model trainer source repo [here](https://github.com/gabrielvenegas/canswim). Feedback welcome via github issues.
+            * Model trainer source repo [here](https://github.com/maxisplus/canswim). Feedback welcome via github issues.
             """
             )
             with gr.Tab("Charts"):
