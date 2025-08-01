@@ -329,54 +329,64 @@ class MarketDataGatherer:
         pd.testing.assert_frame_equal(_bm, merged_df)
         logger.info(f"Sanity check passed. Loaded OK from {data_file}")
 
+
+
+
+        #Fixing gather_earnings enpoint, it used to be by ticker, now it's a bulk
     def gather_earnings_data(self):
-        logger.info("Gathering earnings and sales data...")
-        earnings_all_df = None  # Pandas prefers None to empty df in concat
-        for ticker in self.stocks_ticker_set:  # ['AAON']: #
-            earnings = fmpsdk.historical_earning_calendar(
-                apikey=self.FMP_API_KEY, symbol=ticker, limit=-1
-            )
-            if earnings is not None and len(earnings) > 0:
-                try:
-                    edf = pd.DataFrame(earnings)
-                    edf = edf.dropna(how="all")
-                    edf = edf.fillna(-1)
-                    if not edf.empty:
-                        edf["date"] = pd.to_datetime(edf["date"])
-                        edf = edf.set_index(["symbol", "date"])
-                        earnings_all_df = pd.concat([earnings_all_df, edf])
-                        logger.info(f"Total earnings reports for {ticker}: {len(edf)}")
-                    else:
-                        logger.warning(f"Skipping {ticker} due to lack of data")
-                except ValueError as e:
-                    logger.warning(
-                        f"Skipping {ticker} due to error: {type(e)}, {e}, \n{earnings} "
-                    )
-            else:
-                logger.warning(f"Skipping {ticker} due to lack of data")
+        logger.info("Gathering all earnings calendar data from FMP...")
+        
+        # 1. Call the bulk API endpoint ONCE
+        # (Assumes you have modified fmpsdk.historical_earning_calendar to take no symbol)
+        all_earnings = fmpsdk.historical_earning_calendar(
+            apikey=self.FMP_API_KEY #type: ignore
+        )
 
-        #    earliest_earn = earnings[-1] if len(earnings > 0 else 'None')
-        #    logger.info(f"Earliest earnings report for {ticker}: {earliest_earn}")
+        if all_earnings is None or len(all_earnings) == 0:
+            logger.error("Failed to fetch bulk earnings data from FMP API. Exiting.")
+            # It's important to exit here to prevent the crash
+            return
 
-        logger.info(f"Earnings sample report for {ticker}: \n{earnings}")
-        earnings_all_df.index.names = ["Symbol", "Date"]
+        # 2. Convert the entire list of dictionaries to a DataFrame
+        earnings_all_df = pd.DataFrame(all_earnings)
+        
+        # --- Data Cleaning and Filtering ---
+        earnings_all_df = earnings_all_df.dropna(how="all")
+        
+        # 3. Filter the large DataFrame to keep only the symbols in our master list
+        logger.info(f"Filtering {len(earnings_all_df)} total earnings reports for {len(self.stocks_ticker_set)} target stocks.")
+        # This is the key step: .isin() checks if the 'symbol' for each row is in your set
+        earnings_all_df = earnings_all_df[earnings_all_df['symbol'].isin(list(self.stocks_ticker_set))]
+        
+        if earnings_all_df.empty:
+            logger.warning("No earnings data was found for any of the specified stock tickers.")
+            return
+
+        # --- Standard Processing from the original code ---
+        # Now that we have the filtered data, the rest of the code works as before
+        earnings_all_df = earnings_all_df.fillna(-1)
+        earnings_all_df["date"] = pd.to_datetime(earnings_all_df["date"])
+        earnings_all_df = earnings_all_df.set_index(["symbol", "date"])
         earnings_all_df = earnings_all_df.sort_index()
+        
         logger.info(
-            f"Total number of earnings records for all stocks: \n{len(earnings_all_df)}"
+            f"Total number of earnings records found for all stocks: {len(earnings_all_df)}"
         )
-        logger.info(f"earnings_all_df: \n{earnings_all_df}")
-        logger.info(
-            f"len(earnings_all_df.index.levels[0]): \n{len(earnings_all_df.index.levels[0])}"
-        )
+
         earnings_file = "data/data-3rd-party/earnings_calendar.parquet"
         earnings_all_df.to_parquet(earnings_file)
-        ### Read back data and verify it
+
+        # --- Verification Step ---
+        logger.info(f"Verifying saved data from {earnings_file}...")
         tmp_earn_df = pd.read_parquet(earnings_file)
-        logger.info(f"tmp_earn_df: \n{tmp_earn_df}")
         pd.testing.assert_frame_equal(tmp_earn_df, earnings_all_df)
         logger.info(
             f"Sanity check passed for earnings data. Loaded OK from file: {earnings_file}"
         )
+
+
+
+
 
     def gather_stock_key_metrics(self):
         logger.info("Gathering key metrics data with company fundamentals...")
@@ -436,11 +446,9 @@ class MarketDataGatherer:
         for ticker in self.stocks_ticker_set:
             logger.info(f"Gathering report for {ticker}")
             raw = fmpsdk.historical_stock_dividend(
-                apikey=self.FMP_API_KEY, symbol=ticker
+                apikey=self.FMP_API_KEY, symbol=ticker #type: ignore
             )
             # skip symbols without any data
-            if raw is not None:
-                raw = raw.get("historical")
             if raw is not None and len(raw) > 0:
                 # logger.info(f"Sample raw report for {ticker}: \n{raw}")
                 df = pd.DataFrame(raw)
@@ -472,37 +480,41 @@ class MarketDataGatherer:
         logger.info("Gathering stock splits data...")
         all_df = None
         for ticker in self.stocks_ticker_set:
-            logger.info(f"Gathering report for {ticker}")
-            raw = fmpsdk.historical_stock_split(apikey=self.FMP_API_KEY, symbol=ticker)
-            # skip symbols without any data
-            if raw is not None:
-                raw = raw.get("historical")
-            if raw is not None and len(raw) > 0:
-                # logger.debug(f"Sample raw report for {ticker}: \n{raw}")
-                df = pd.DataFrame(raw)
-                # logger.debug(f"df for {ticker}: \n{df}")
-                df = df.dropna(how="all")
-                df["date"] = pd.to_datetime(df["date"])
-                df["symbol"] = ticker
-                df = df.set_index(["symbol", "date"])
-                all_df = pd.concat([all_df, df])
-                logger.debug(f"Total reports for {ticker}: {len(df)}")
+            if ticker.strip():
+                logger.info(f"Gathering split report for {ticker}")
 
-        if all_df is not None:
-            logger.debug(f"Sample report for {ticker}: \n{df}")
+                # Call your new, corrected helper function
+                raw = fmpsdk.historical_stock_split(
+                    apikey=self.FMP_API_KEY, symbol=ticker #type: ignore
+                )
+
+                # The new API returns the list directly, so we REMOVE the .get("historical") line
+                if raw is not None and len(raw) > 0:
+                    df = pd.DataFrame(raw)
+                    df = df.dropna(how="all")
+                    df["date"] = pd.to_datetime(df["date"])
+                    df["symbol"] = ticker
+                    df = df.set_index(["symbol", "date"])
+                    all_df = pd.concat([all_df, df])
+                    logger.debug(f"Total split reports for {ticker}: {len(df)}")
+
+        if all_df is not None and not all_df.empty:
             all_df.index.names = ["Symbol", "Date"]
             all_df = all_df.sort_index()
-            logger.info(f"Total number of records for all stocks: \n{len(all_df)}")
-            logger.debug(f"all_df: \n{all_df}")
-            logger.info(f"len(all_df.index.levels[0]): \n{len(all_df.index.levels[0])}")
+            logger.info(f"Total number of split records for all stocks: {len(all_df)}")
+
             file = f"{self.data_dir}/{self.data_3rd_party}/stock_splits.parquet"
             all_df.to_parquet(file)
-            ### Read back data and verify it
+
+            # Verification step
             tmp_df = pd.read_parquet(file)
-            logger.debug(f"tmp_df: \n{tmp_df}")
             pd.testing.assert_frame_equal(tmp_df, all_df)
-            logger.info(f"Sanity check passed. Data loaded OK from file: {file}")
+            logger.info(f"Sanity check passed. Split data loaded OK from file: {file}")
+
         logger.info("Finished gathering stock splits data.")
+
+
+
 
     def gather_institutional_stock_ownership(self):
         logger.info("Gathering institutional ownership data...")
