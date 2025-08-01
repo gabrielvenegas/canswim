@@ -206,7 +206,7 @@ class MarketDataGatherer:
             bucket_class=MemoryQueueBucket,
             backend=SQLiteCache("yfinance.cache"),
         )
-        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d")
+        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d", threads=False)
         new_df = new_df.dropna(how="all")
         logger.info("New data gathered. Sample: \n{bm}", bm=new_df)
         logger.info(f"Columns: \n{new_df.columns}")
@@ -301,7 +301,7 @@ class MarketDataGatherer:
             backend=SQLiteCache("yfinance.cache"),
         )
         new_df = yf.download(
-            self.stocks_ticker_set, start=start_date, group_by="tickers"
+            self.stocks_ticker_set, start=start_date, group_by="tickers", threads=False
         )
         new_df = new_df.dropna(how="all")
         new_df = new_df.stack(level=0)

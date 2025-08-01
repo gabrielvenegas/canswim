@@ -2,7 +2,7 @@
 args=("$@")
 #conda activate canswim
 #pip install -e ./
-python -m canswim "${args[@]}"
+python3 -m canswim "${args[@]}"
 
 # run dashboard
 # gradio src/canswim/dashboard.py
