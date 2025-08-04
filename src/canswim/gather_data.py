@@ -332,58 +332,54 @@ class MarketDataGatherer:
 
 
 
-        #Fixing gather_earnings enpoint, it used to be by ticker, now it's a bulk
     def gather_earnings_data(self):
-        logger.info("Gathering all earnings calendar data from FMP...")
-        
-        # 1. Call the bulk API endpoint ONCE
-        # (Assumes you have modified fmpsdk.historical_earning_calendar to take no symbol)
-        all_earnings = fmpsdk.historical_earning_calendar(
-            apikey=self.FMP_API_KEY #type: ignore
-        )
+        logger.info("Gathering earnings and sales data...")
+        earnings_all_df = None  # Pandas prefers None to empty df in concat
+        for ticker in self.stocks_ticker_set:  # ['AAON']: #
+            earnings = fmpsdk.historical_earning_calendar(
+                apikey=self.FMP_API_KEY, symbol=ticker, limit=-1
+            )
+            if earnings is not None and len(earnings) > 0:
+                try:
+                    edf = pd.DataFrame(earnings)
+                    edf = edf.dropna(how="all")
+                    edf = edf.fillna(-1)
+                    if not edf.empty:
+                        edf["date"] = pd.to_datetime(edf["date"])
+                        edf = edf.set_index(["symbol", "date"])
+                        earnings_all_df = pd.concat([earnings_all_df, edf])
+                        logger.info(f"Total earnings reports for {ticker}: {len(edf)}")
+                    else:
+                        logger.warning(f"Skipping {ticker} due to lack of data")
+                except ValueError as e:
+                    logger.warning(
+                        f"Skipping {ticker} due to error: {type(e)}, {e}, \n{earnings} "
+                    )
+            else:
+                logger.warning(f"Skipping {ticker} due to lack of data")
 
-        if all_earnings is None or len(all_earnings) == 0:
-            logger.error("Failed to fetch bulk earnings data from FMP API. Exiting.")
-            # It's important to exit here to prevent the crash
-            return
+        #    earliest_earn = earnings[-1] if len(earnings > 0 else 'None')
+        #    logger.info(f"Earliest earnings report for {ticker}: {earliest_earn}")
 
-        # 2. Convert the entire list of dictionaries to a DataFrame
-        earnings_all_df = pd.DataFrame(all_earnings)
-        
-        # --- Data Cleaning and Filtering ---
-        earnings_all_df = earnings_all_df.dropna(how="all")
-        
-        # 3. Filter the large DataFrame to keep only the symbols in our master list
-        logger.info(f"Filtering {len(earnings_all_df)} total earnings reports for {len(self.stocks_ticker_set)} target stocks.")
-        # This is the key step: .isin() checks if the 'symbol' for each row is in your set
-        earnings_all_df = earnings_all_df[earnings_all_df['symbol'].isin(list(self.stocks_ticker_set))]
-        
-        if earnings_all_df.empty:
-            logger.warning("No earnings data was found for any of the specified stock tickers.")
-            return
-
-        # --- Standard Processing from the original code ---
-        # Now that we have the filtered data, the rest of the code works as before
-        earnings_all_df = earnings_all_df.fillna(-1)
-        earnings_all_df["date"] = pd.to_datetime(earnings_all_df["date"])
-        earnings_all_df = earnings_all_df.set_index(["symbol", "date"])
+        logger.info(f"Earnings sample report for {ticker}: \n{earnings}")
+        earnings_all_df.index.names = ["Symbol", "Date"]
         earnings_all_df = earnings_all_df.sort_index()
-        
         logger.info(
-            f"Total number of earnings records found for all stocks: {len(earnings_all_df)}"
+            f"Total number of earnings records for all stocks: \n{len(earnings_all_df)}"
         )
-
+        logger.info(f"earnings_all_df: \n{earnings_all_df}")
+        logger.info(
+            f"len(earnings_all_df.index.levels[0]): \n{len(earnings_all_df.index.levels[0])}"
+        )
         earnings_file = "data/data-3rd-party/earnings_calendar.parquet"
         earnings_all_df.to_parquet(earnings_file)
-
-        # --- Verification Step ---
-        logger.info(f"Verifying saved data from {earnings_file}...")
+        ### Read back data and verify it
         tmp_earn_df = pd.read_parquet(earnings_file)
+        logger.info(f"tmp_earn_df: \n{tmp_earn_df}")
         pd.testing.assert_frame_equal(tmp_earn_df, earnings_all_df)
         logger.info(
             f"Sanity check passed for earnings data. Loaded OK from file: {earnings_file}"
         )
-
 
 
 
