@@ -448,17 +448,24 @@ class MarketDataGatherer:
             raw = fmpsdk.historical_stock_dividend(
                 apikey=self.FMP_API_KEY, symbol=ticker #type: ignore
             )
+            if raw is not None:
+                logger.debug(f"Raw data for stock splits {raw}")
+                if isinstance(raw, dict):
+                    raw = raw.get("historical")
             # skip symbols without any data
             if raw is not None and len(raw) > 0:
                 # logger.info(f"Sample raw report for {ticker}: \n{raw}")
                 df = pd.DataFrame(raw)
                 # logger.debug(f"df for {ticker}: \n{df}")
-                df = df.dropna(how="all")
-                df["date"] = pd.to_datetime(df["date"])
-                df["symbol"] = ticker
-                df = df.set_index(["symbol", "date"])
-                all_df = pd.concat([all_df, df])
-                logger.debug(f"Total reports for {ticker}: {len(df)}")
+                if 'date' in df.columns:
+                    df = df.dropna(how="all")
+                    df["date"] = pd.to_datetime(df["date"])
+                    df["symbol"] = ticker
+                    df = df.set_index(["symbol", "date"])
+                    all_df = pd.concat([all_df, df])
+                    logger.debug(f"Total reports for {ticker}: {len(df)}")
+                else:
+                    logger.warning(f"Skipping ticker {ticker} due to missing column 'date' in API response.")
 
         if all_df is not None:
             logger.debug(f"Sample report for {ticker}: \n{df}")
@@ -489,14 +496,22 @@ class MarketDataGatherer:
                 )
 
                 # The new API returns the list directly, so we REMOVE the .get("historical") line
+                if raw is not None:
+                    logger.debug(f"Raw data for stock splits {raw}")
+                    if isinstance(raw, dict):
+                        raw = raw.get("historical")
                 if raw is not None and len(raw) > 0:
                     df = pd.DataFrame(raw)
-                    df = df.dropna(how="all")
-                    df["date"] = pd.to_datetime(df["date"])
-                    df["symbol"] = ticker
-                    df = df.set_index(["symbol", "date"])
-                    all_df = pd.concat([all_df, df])
-                    logger.debug(f"Total split reports for {ticker}: {len(df)}")
+                    if 'date' in df.columns: 
+                        df = df.dropna(how="all")
+                        df["date"] = pd.to_datetime(df["date"])
+                        df["symbol"] = ticker
+                        df = df.set_index(["symbol", "date"])
+                        all_df = pd.concat([all_df, df])
+                        logger.debug(f"Total split reports for {ticker}: {len(df)}")
+                    else:
+                        logger.warning(f"Skipping ticker {ticker} due to missing 'date' column in split data response")
+                        logger.debug(f"Date was missing for ticker {ticker}, raw: {raw}")
 
         if all_df is not None and not all_df.empty:
             all_df.index.names = ["Symbol", "Date"]

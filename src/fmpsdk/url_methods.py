@@ -38,8 +38,11 @@ def __return_json_v3(
     url = f"{BASE_URL_v3}{path}"
     return_var = None
     try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         response = requests.get(
-            url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
+            url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT), headers=headers
         )
         if len(response.content) > 0:
             return_var = response.json()
