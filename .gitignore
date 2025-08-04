@@ -1,4 +1,5 @@
 darts_logs/**
+data/**
 .env*
 tmp/**
 **/__pycache__/**
