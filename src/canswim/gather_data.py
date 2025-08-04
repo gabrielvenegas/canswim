@@ -178,7 +178,7 @@ class MarketDataGatherer:
         logger.info(f"Loaded fund tickers: \n{sorted(list(all_funds_set))}")
         return all_funds_set
 
-    def _gather_yfdata_date_index(self, data_file: str = None, tickers: str = None):
+    def _gather_yfdata_date_index(self, data_file: str = None, tickers: str = None, threads: bool = True):
         start_date = self.min_start_date
         old_df = None
         try:
@@ -206,7 +206,7 @@ class MarketDataGatherer:
             bucket_class=MemoryQueueBucket,
             backend=SQLiteCache("yfinance.cache"),
         )
-        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d", threads=False)
+        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d", threads=threads)
         new_df = new_df.dropna(how="all")
         logger.info("New data gathered. Sample: \n{bm}", bm=new_df)
         logger.info(f"Columns: \n{new_df.columns}")
@@ -674,21 +674,21 @@ class MarketDataGatherer:
 
 # main function
 def main():
-    hfhub = HFHub()
-    hfhub.download_data()
+    #hfhub = HFHub()
+    #hfhub.download_data()
     g = MarketDataGatherer()
     g.gather_broad_market_data()
-    g.gather_sectors_data()
-    g.gather_industry_fund_data()
-    g.gather_stock_tickers()
-    g.gather_stock_price_data()
-    g.gather_stock_dividends()
-    g.gather_stock_splits()
-    g.gather_earnings_data()
-    g.gather_stock_key_metrics()
-    g.gather_institutional_stock_ownership()
-    g.gather_analyst_estimates()
-    hfhub.upload_data()
+    #g.gather_sectors_data()
+    #g.gather_industry_fund_data()
+    #g.gather_stock_tickers()
+    #g.gather_stock_price_data()
+    #g.gather_stock_dividends()
+    #g.gather_stock_splits()
+    #g.gather_earnings_data()
+    #g.gather_stock_key_metrics()
+    #g.gather_institutional_stock_ownership()
+    #g.gather_analyst_estimates()
+    #hfhub.upload_data()
 
 
 if __name__ == "__main__":

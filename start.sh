@@ -13,4 +13,3 @@ echo "Installing nano for Gabriel cause he's afraid of Vim's superiority"
 apt install nano
 echo "Nano installed, installing tmux"
 echo apt install tmux
-echo "Tmux installed!"
