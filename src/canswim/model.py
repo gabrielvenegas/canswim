@@ -59,6 +59,8 @@ class CanswimModel:
         self.target_column = "Close"
         self.covariates = Covariates()
         self.hfhub = HFHub()
+        self.data_dir = os.getenv("data_dir", "data")
+        self.data_3rd_party = os.getenv("data-3rd-party", "data-3rd-party")
         # use GPU if available
         if torch.cuda.is_available():
             logger.info("Configuring CUDA GPU")
@@ -716,6 +718,33 @@ class CanswimModel:
             f"Training loop stock subset has {len(self.stock_tickers)} tickers: ",
             self.stock_tickers,
         )
+
+        logger.info("Filtering ticker list to ensure all have fundamental data...")
+        try:
+            # Load the earnings and key metrics data to see which symbols are present
+            earnings_df = pd.read_parquet(f"{self.data_dir}/{self.data_3rd_party}/earnings_calendar.parquet")
+            keymetrics_df = pd.read_parquet(f"{self.data_dir}/{self.data_3rd_party}/keymetrics_history.parquet")
+
+            # Get the unique symbols from each dataframe
+            symbols_with_earnings = set(earnings_df.index.get_level_values('Symbol').unique())
+            symbols_with_keymetrics = set(keymetrics_df.index.get_level_values('Symbol').unique())
+
+            # Find the intersection: symbols that are in our price list AND have both earnings and key metrics
+            initial_set = set(self.__stock_tickers)
+            valid_symbols = initial_set.intersection(symbols_with_earnings).intersection(symbols_with_keymetrics)
+
+            # Overwrite the old ticker list with the new, filtered list
+            self.__stock_tickers = sorted(list(valid_symbols))
+
+            logger.info(f"Filtered ticker list down to {len(self.__stock_tickers)} stocks with complete data.")
+        except Exception as e:
+            logger.error(f"Could not filter tickers due to an error reading parquet files: {e}")
+            # If filtering fails, proceed with the unfiltered list but warn the user.
+            pass
+
+
+
+
         self.targets.load_data(
             stock_tickers=self.stock_tickers,
             min_samples=self.min_samples,
