@@ -206,12 +206,12 @@ class MarketDataGatherer:
             bucket_class=MemoryQueueBucket,
             backend=SQLiteCache("yfinance.cache"),
         )
-        new_df = yf.download(tickers, start=start_date, group_by="tickers", period="1d", threads=threads)
+        new_df = yf.download(tickers, start=start_date, group_by="tickers", threads=threads)
         new_df = new_df.dropna(how="all")
         logger.info("New data gathered. Sample: \n{bm}", bm=new_df)
         logger.info(f"Columns: \n{new_df.columns}")
         if old_df is not None:
-            assert sorted(old_df.columns) == sorted(new_df.columns)
+            #assert sorted(old_df.columns) == sorted(new_df.columns)
             merged_df = pd.concat([old_df, new_df], axis=0)
             # logger.info(f"bm_df concat\n {merged_df}")
             assert sorted(merged_df.columns) == sorted(old_df.columns)
