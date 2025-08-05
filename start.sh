@@ -14,3 +14,6 @@ apt install nano
 echo -e "\033[32mNano installed, installing tmux\033[0m"
 apt install -y tmux
 echo -e "\033[32mTmux installed!\033[0m"
+echo -e "\033[32mAdding my tmux config to the root\033[0m"
+mv .tmux.conf ~/
+echo -e "\033[32mTmux config added, ready to go\033[0m"
