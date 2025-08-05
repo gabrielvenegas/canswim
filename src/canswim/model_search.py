@@ -21,13 +21,13 @@ def main():
     def build_dummy_model():
         """Build a dummy model with max data load requirements"""
         canswim_model.build(
-            input_chunk_length=252,
+            input_chunk_length=126,             # Look back 6 months instead of a year (reduces min_samples)
             output_chunk_length=42,
-            hidden_size=2048,
-            num_encoder_layers=3,
-            num_decoder_layers=3,
+            hidden_size=512,                    # Drastically reduces model size and memory usage
+            num_encoder_layers=1,               # Fewer layers = faster computation
+            num_decoder_layers=1,               # Fewer layers = faster computation
             decoder_output_dim=8,
-            temporal_decoder_hidden=64,
+            temporal_decoder_hidden=32,            
             use_layer_norm=True,
             use_reversible_instance_norm=True,
             dropout=0.2,

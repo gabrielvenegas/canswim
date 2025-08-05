@@ -981,20 +981,16 @@ class CanswimModel:
         # select input and output chunk lengths
         # try historical periods ranging between 1 and 2 years with a step of 1 month (21 busness days)
         input_chunk_length = trial.suggest_int(
-            "input_chunk_length",
-            low=168,
-            high=252,
-            step=84,  # 42,
-            # low=252,
-            # high=self.train_history,
-            # step=21,
+        "input_chunk_length",
+        low=84,  # Approx 4 months
+        high=168, # Approx 8 months
+        step=42,
         )
-        # try prediction periods ranging between 8 weeks to 12 weeks with a step of 1 week
         output_chunk_length = trial.suggest_int(
             name="output_chunk_length",
-            low=42,
-            high=42,
-            step=1,  # high=62, step=5
+            low=21,  # Approx 1 month
+            high=42, # Approx 2 months
+            step=21,
         )
 
         # Other hyperparameters
