@@ -301,7 +301,7 @@ class MarketDataGatherer:
             backend=SQLiteCache("yfinance.cache"),
         )
         new_df = yf.download(
-            self.stocks_ticker_set, start=start_date, group_by="tickers", threads=False
+            self.stocks_ticker_set, start=start_date, group_by="tickers", threads=True
         )
         new_df = new_df.dropna(how="all")
         new_df = new_df.stack(level=0)
@@ -674,21 +674,21 @@ class MarketDataGatherer:
 
 # main function
 def main():
-    #hfhub = HFHub()
-    #hfhub.download_data()
+    hfhub = HFHub()
+    hfhub.download_data()
     g = MarketDataGatherer()
     g.gather_broad_market_data()
-    #g.gather_sectors_data()
-    #g.gather_industry_fund_data()
-    #g.gather_stock_tickers()
-    #g.gather_stock_price_data()
-    #g.gather_stock_dividends()
-    #g.gather_stock_splits()
-    #g.gather_earnings_data()
-    #g.gather_stock_key_metrics()
-    #g.gather_institutional_stock_ownership()
-    #g.gather_analyst_estimates()
-    #hfhub.upload_data()
+    g.gather_sectors_data()
+    g.gather_industry_fund_data()
+    g.gather_stock_tickers()
+    g.gather_stock_price_data()
+    g.gather_stock_dividends()
+    g.gather_stock_splits()
+    g.gather_earnings_data()
+    g.gather_stock_key_metrics()
+    g.gather_institutional_stock_ownership()
+    g.gather_analyst_estimates()
+    hfhub.upload_data()
 
 
 if __name__ == "__main__":
