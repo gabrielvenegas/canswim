@@ -1082,7 +1082,7 @@ class CanswimModel:
         )
 
         # reload best model over course of training
-        model = TiDEModel.load_from_checkpoint(self.model_name)
+        model = TiDEModel.load_from_checkpoint(self.model_name, weights_only=False)
 
         # Evaluate how good it is on the validation set
         preds = model.predict(
