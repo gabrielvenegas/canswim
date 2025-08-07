@@ -1025,11 +1025,11 @@ class CanswimModel:
         lr = trial.suggest_float("lr", 1e-5, 1e-5, log=True)
 
         # throughout training we'll monitor the validation loss for both pruning and early stopping
-        pruner = PyTorchLightningPruningCallback(trial, monitor="val_loss")
+        #pruner = PyTorchLightningPruningCallback(trial, monitor="val_loss")
         early_stopper = EarlyStopping(
             "val_loss", min_delta=0.001, patience=3, verbose=True
         )
-        callbacks = [pruner, early_stopper]
+        callbacks = [early_stopper]
 
         # detect if a GPU is available
         if torch.cuda.is_available():
@@ -1098,7 +1098,7 @@ class CanswimModel:
         logger.info(
             f"Calculating loss for target_list({len(self.targets_list)}) and preds({len(preds)})"
         )
-        loss = quantile_loss(self.targets_list, preds, n_jobs=-1, verbose=True)
+        loss = quantile_loss(self.target_val_list, preds, n_jobs=-1, verbose=True)
         loss_val = np.mean(loss)
 
         if loss_val == np.nan:
