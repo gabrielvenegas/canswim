@@ -137,7 +137,7 @@ class Covariates:
                 tes_tmp = TimeSeries.from_dataframe(
                     t_earn, freq="B", fill_missing_dates=True
                 )
-                t_earn = self.back_fill_earn_estimates(t_earn=tes_tmp.pd_dataframe())
+                t_earn = self.back_fill_earn_estimates(t_earn=tes_tmp.to_dataframe())
                 tes = TimeSeries.from_dataframe(t_earn, fillna_value=-1)
                 assert len(tes.gaps()) == 0
                 t_earn_series[t] = tes
@@ -200,7 +200,7 @@ class Covariates:
                 ts_tmp = TimeSeries.from_dataframe(
                     t_iown, freq="B", fill_missing_dates=True
                 )
-                t_iown = ts_tmp.pd_dataframe()
+                t_iown = ts_tmp.to_dataframe()
                 t_iown.ffill(inplace=True)
                 # use 0 as a filler for unknown ownership absolute values and deltas
                 ts = TimeSeries.from_dataframe(t_iown, fillna_value=0)
@@ -261,9 +261,9 @@ class Covariates:
         """
         updated_cov_series = None
         if cov_series.end_time() < price_series.end_time():
-            df = cov_series.pd_dataframe()
+            df = cov_series.to_dataframe()
             new_cov_df = df.reindex(
-                price_series.pd_dataframe().index, method="ffill", copy=True
+                price_series.to_dataframe().index, method="ffill", copy=True
             )
             new_cov_ser = TimeSeries.from_dataframe(
                 new_cov_df, freq="B", fillna_value=fillna_value
@@ -318,7 +318,7 @@ class Covariates:
                     kms_df, freq="B", fill_missing_dates=True
                 )
                 # logger.info(f'kms_series_tmp start time, end time: {tkms_series_tmp.start_time()}, {tkms_series_tmp.end_time()}')
-                kms_df_ext = tkms_series_tmp.pd_dataframe()
+                kms_df_ext = tkms_series_tmp.to_dataframe()
                 kms_df_ext.ffill(inplace=True)
                 kms_ser = TimeSeries.from_dataframe(kms_df, freq="B", fillna_value=-1)
                 kms_ser_padded = self.pad_covs(cov_series=kms_ser, price_series=prices)
@@ -613,7 +613,7 @@ class Covariates:
                     est_df, freq="B", fill_missing_dates=True
                 )
                 # logger.info(f'est_series_tmp start time, end time: {est_series_tmp.start_time()}, {est_series_tmp.end_time()}')
-                est_df = est_series_tmp.pd_dataframe()
+                est_df = est_series_tmp.to_dataframe()
                 # Make current annual/quarter period estimates available on all business days through end of the period
                 est_df.ffill(inplace=True)
                 est_ser = TimeSeries.from_dataframe(est_df, freq="B", fillna_value=-1)
@@ -732,7 +732,7 @@ class Covariates:
                 # )
             else:
                 end = s.end_time() + BDay(n=n)
-                df = s.pd_dataframe()
+                df = s.to_dataframe()
                 idx = pd.date_range(start=start, end=end, freq="B")
                 df = df.reindex(idx).ffill()
                 s_ext = TimeSeries.from_dataframe(df, freq="B", fill_missing_dates=True)
@@ -847,7 +847,7 @@ class Covariates:
                 # logger.debug(
                 #     f"tmp series start time, end time: {tmp.start_time()}, {tmp.end_time()}"
                 # )
-                t_div = tmp.pd_dataframe()
+                t_div = tmp.to_dataframe()
                 t_div.ffill(inplace=True)
                 # Fill empty cells with 0 to indicate to the model unknown dividend
                 ts = TimeSeries.from_dataframe(t_div, freq="B", fillna_value=0)
@@ -927,7 +927,7 @@ class Covariates:
                 # logger.debug(
                 #     f"tmp series start time, end time: {tmp.start_time()}, {tmp.end_time()}"
                 # )
-                t_splits = tmp.pd_dataframe()
+                t_splits = tmp.to_dataframe()
                 # Do not interpolate splits forward, because
                 # the Date index is the date when the split occurs
                 # the model should not be confused as to when exactly

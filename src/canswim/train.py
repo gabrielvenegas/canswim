@@ -2,7 +2,7 @@ import torch
 from canswim.model import CanswimModel
 from darts.models import TiDEModel
 from canswim.hfhub import HFHub
-from darts.metrics import quantile_loss
+#from darts.metrics import quantile_loss
 import numpy as np
 import os
 from dotenv import load_dotenv
