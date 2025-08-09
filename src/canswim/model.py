@@ -490,9 +490,15 @@ class CanswimModel:
             mode="min",
         )
         callbacks = [early_stopper]
+        # detect if a GPU is available
+        if torch.cuda.is_available():
+            num_workers = 4
+        else:
+            num_workers = 0
         pl_trainer_kwargs = {
             "accelerator": "auto",
             "callbacks": callbacks,
+            "num_workers": num_workers,
         }
 
         model = self.__build_model(
@@ -992,11 +998,6 @@ class CanswimModel:
         early_stopper = EarlyStopping("val_loss", min_delta=0.001, patience=3, verbose=True)
         callbacks = [early_stopper]
 
-        # detect if a GPU is available
-        if torch.cuda.is_available():
-            num_workers = 4
-        else:
-            num_workers = 0
 
         pl_trainer_kwargs = {
             "accelerator": "auto",
@@ -1033,7 +1034,6 @@ class CanswimModel:
             val_past_covariates=self.past_cov_list,
             val_future_covariates=self.future_cov_list,
             verbose=True,
-            num_loader_workers=num_workers,
         )
 
         # --- NEW, SIMPLER EVALUATION ---
