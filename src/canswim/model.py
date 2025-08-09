@@ -974,61 +974,23 @@ class CanswimModel:
             plt.legend()
 
     # define objective function
+
     def _optuna_objective(self, trial):
-        # Try parameter ranges suggested in the original TiDE paper, Section B.3 Table 7
-        # https://arxiv.org/pdf/2304.08424.pdf
+        # This first section where Optuna suggests parameters is the same
+        input_chunk_length = trial.suggest_int("input_chunk_length", low=84, high=168, step=42)
+        output_chunk_length = trial.suggest_int(name="output_chunk_length", low=21, high=42, step=21)
+        hidden_size = trial.suggest_int("hidden_size", low=256, high=512, step=256)
+        num_encoder_layers = trial.suggest_int("num_encoder_layers", low=1, high=2)
+        num_decoder_layers = trial.suggest_int("num_decoder_layers", low=1, high=2)
+        decoder_output_dim = trial.suggest_int("decoder_output_dim", low=4, high=16, step=4)
+        temporal_decoder_hidden = trial.suggest_int("temporal_decoder_hidden", low=16, high=64, step=16)
+        dropout = trial.suggest_float("dropout", low=0.1, high=0.3, step=0.1)
+        use_layer_norm = trial.suggest_categorical("use_layer_norm", [True])
+        use_reversible_instance_norm = trial.suggest_categorical("use_reversible_instance_norm", [True])
+        lr = trial.suggest_float("lr", 1e-5, 1e-3, log=True)
 
-        # select input and output chunk lengths
-        # try historical periods ranging between 1 and 2 years with a step of 1 month (21 busness days)
-        input_chunk_length = trial.suggest_int(
-        "input_chunk_length",
-        low=84,  # Approx 4 months
-        high=168, # Approx 8 months
-        step=42,
-        )
-        output_chunk_length = trial.suggest_int(
-            name="output_chunk_length",
-            low=21,  # Approx 1 month
-            high=42, # Approx 2 months
-            step=21,
-        )
-
-        # Other hyperparameters
-        hidden_size = trial.suggest_int(
-            "hidden_size", low=2048, high=2048, step=256
-        )  # low=256, high=1024, step=256)
-        num_encoder_layers = trial.suggest_int(
-            "num_encoder_layers", low=3, high=3
-        )  # low=1, high=3)
-        num_decoder_layers = trial.suggest_int(
-            "num_decoder_layers", low=2, high=2
-        )  # low=1, high=3)
-        decoder_output_dim = trial.suggest_int(
-            "decoder_output_dim", low=8, high=8, step=8  # low=4, high=32, step=4
-        )
-        temporal_decoder_hidden = trial.suggest_int(
-            "temporal_decoder_hidden",
-            low=80,  # 48,
-            high=112,
-            step=32,  # low=16, high=128, step=16
-        )
-        dropout = trial.suggest_float(
-            "dropout", low=0.3, high=0.3, step=0.1
-        )  # low=0.0, high=0.5, step=0.1)
-        use_layer_norm = trial.suggest_categorical(
-            "use_layer_norm", [True]
-        )  # , False])
-        use_reversible_instance_norm = trial.suggest_categorical(
-            "use_reversible_instance_norm",
-            [True],  # , False]
-        )
-        lr = trial.suggest_float("lr", 1e-5, 1e-5, log=True)
-
-        # throughout training we'll monitor the validation loss for both pruning and early stopping
-        #pruner = PyTorchLightningPruningCallback(trial, monitor="val_loss")
-        early_stopper = EarlyStopping(
-            "val_loss", min_delta=0.001, patience=3, verbose=True
-        )
+        # The EarlyStopping callback is now the key to getting our score
+        early_stopper = EarlyStopping("val_loss", min_delta=0.001, patience=3, verbose=True)
         callbacks = [early_stopper]
 
         # detect if a GPU is available
@@ -1042,10 +1004,9 @@ class CanswimModel:
             "callbacks": callbacks,
         }
 
-        # reproducibility
         torch.manual_seed(42)
 
-        # build the model
+        # build the model with the suggested parameters
         model = self.__build_model(
             input_chunk_length=input_chunk_length,
             output_chunk_length=output_chunk_length,
@@ -1060,12 +1021,8 @@ class CanswimModel:
             optimizer_kwargs={"lr": lr},
             pl_trainer_kwargs=pl_trainer_kwargs,
             force_reset=True,
-            save_checkpoints=True,
+            save_checkpoints=False, # We don't need to save/load checkpoints in this new workflow
         )
-
-        # when validating during training, we can use a slightly longer validation
-        # set which also contains the first input_chunk_length time steps
-        # model_val_set = scaler.transform(series[-(VAL_LEN + in_len) :])
 
         # train the model
         model.fit(
@@ -1074,40 +1031,20 @@ class CanswimModel:
             future_covariates=self.future_cov_list,
             epochs=self.n_epochs,
             val_series=self.target_val_list,
-            ##val_past_covariates=self.past_cov_val_list,
             val_past_covariates=self.past_cov_list,
             val_future_covariates=self.future_cov_list,
             verbose=True,
             num_loader_workers=num_workers,
         )
 
-        # reload best model over course of training
-        model = TiDEModel.load_from_checkpoint(self.model_name)
-
-        # Evaluate how good it is on the validation set
-        preds = model.predict(
-            n=model.output_chunk_length,
-            series=self.target_val_list,  # self.target_train_list,
-            mc_dropout=True,
-            num_samples=500,
-            past_covariates=self.past_cov_list,
-            future_covariates=self.future_cov_list,
-            num_loader_workers=4,
-        )
-
-        logger.info(
-            f"Calculating loss for target_list({len(self.targets_list)}) and preds({len(preds)})"
-        )
-        loss = quantile_loss(self.target_val_list, preds, n_jobs=-1, verbose=True)
-        loss_val = np.mean(loss)
-
-        if loss_val == np.nan:
-            loss_val = float("inf")
+        # --- NEW, SIMPLER EVALUATION ---
+        # Get the best validation loss score directly from the EarlyStopping callback
+        loss_val = early_stopper.best_score.item()
+        
         logger.info(
             f"Trial concluded with Loss: {loss_val} of model search. Trial instance: {trial}"
         )
         return loss_val
-
     # for convenience, print some optimization trials information
 
     def find_model(self, n_trials: int = 100, study_name: str = "canswim-study"):
